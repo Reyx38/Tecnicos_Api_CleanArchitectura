@@ -1,35 +1,103 @@
-﻿using System.Linq.Expressions;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using Tecnico.Abstracions;
+using Tecnico.Data.Context;
 using Tecnico.Data.Models;
 using Tecnico.Domain.DTO;
 
 namespace Tecnico.Service
 {
-    public class ClientesServices : IClienteService
+    public class ClientesService(IDbContextFactory<ClientesContext> DbFactory) : IClienteService
     {
-        public Task<ClientesDTO> Buscar(int id)
+        private async Task<bool> Existe(int clienteId)
         {
-            throw new NotImplementedException();
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            return await contexto.Clientes.AnyAsync(e => e.ClienteId == clienteId);
+        }
+        public async Task<ClientesDTO> Buscar(int id)
+        {
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            var Cliente = await contexto.Clientes
+                .Where(e => e.ClienteId == id)
+                .Select(p => new ClientesDTO()
+                {
+                    ClienteId = p.ClienteId,
+                    Telefono = p.Telefono,
+                    Nombres = p.Nombres
+                }).FirstOrDefaultAsync();
+
+            return Cliente ?? new ClientesDTO();
         }
 
-        public Task<bool> Eliminar(int clienteId)
+        public async Task<bool> Eliminar(int clienteId)
         {
-            throw new NotImplementedException();
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            return await contexto.Clientes
+                .Where(e => e.ClienteId == clienteId)
+                .ExecuteDeleteAsync() > 0;
         }
 
-        public Task<bool> ExistePrioridad(int Nombres, int tiempo, string Telefono)
+        public async Task<bool> ExisteCliente(string nombres, int id, string Telefono)
         {
-            throw new NotImplementedException();
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            return await contexto.Clientes
+                .AnyAsync(e => e.ClienteId != id
+                && e.Telefono == Telefono
+                || e.Nombres.ToLower().Equals(nombres.ToLower()));
         }
 
-        public Task<bool> Guardar(ClientesDTO cliente)
+        public async Task<bool> Guardar(ClientesDTO cliente)
         {
-            throw new NotImplementedException();
+            if (!await Existe(cliente.ClienteId))
+            {
+                return await Insertar(cliente);
+            }
+            else
+            {
+                return await Modificar(cliente);
+            }
         }
 
-        public Task<List<ClientesDTO>> Listar(Expression<Func<ClientesDTO, bool>> criterio)
+        public async Task<List<ClientesDTO>> Listar(Expression<Func<ClientesDTO, bool>> criterio)
         {
-            throw new NotImplementedException();
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            return await contexto.Clientes
+                .Select(c => new ClientesDTO()
+                {
+                    ClienteId = c.ClienteId,
+                    Nombres = c.Nombres,
+                    Telefono = c.Telefono
+                })
+                .Where(criterio)
+                .ToListAsync();
+        }
+
+        private async Task<bool> Insertar(ClientesDTO clientesDTO)
+        {
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            var Cliente = new Clientes()
+            {
+                ClienteId = clientesDTO.ClienteId,
+                Nombres = clientesDTO.Nombres,
+                Telefono = clientesDTO.Telefono
+            };
+            contexto.Clientes.Add(Cliente);
+            var guardo = await contexto.SaveChangesAsync() > 0;
+            clientesDTO.ClienteId = Cliente.ClienteId;
+            return guardo;
+        }
+        private async Task<bool> Modificar(ClientesDTO clientesDTO)
+        {
+            await using var contexto = await DbFactory.CreateDbContextAsync();
+            var Cliente = new Clientes()
+            {
+                ClienteId = clientesDTO.ClienteId,
+                Nombres = clientesDTO.Nombres,
+                Telefono = clientesDTO.Telefono
+            };
+            contexto.Update(Cliente);
+            var modificado = await contexto.SaveChangesAsync() > 0;
+            return modificado;
         }
     }
 }
