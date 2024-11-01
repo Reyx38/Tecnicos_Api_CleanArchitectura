@@ -8,7 +8,7 @@ namespace Tecnico.Data.DI
     {
         public static IServiceCollection RegisterDbContextFactory(this IServiceCollection services)
         {
-            services.AddDbContextFactory<ClientesContext>(o => o.UseSqlServer("SqlConStr"));
+            services.AddDbContextFactory<ClientesContext>(o => o.UseSqlServer("Name=SqlConStr"));
             return services;
         }
     }
