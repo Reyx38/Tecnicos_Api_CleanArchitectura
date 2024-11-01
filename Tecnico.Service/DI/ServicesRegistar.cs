@@ -10,7 +10,7 @@ namespace Tecnico.Service.Di
         public static IServiceCollection RegistarServices(this IServiceCollection services)
         {
             services.RegisterDbContextFactory();
-            services.AddScoped<IClienteService, ClientesServices>();
+            services.AddScoped<IClienteService, ClientesService>();
             return services;
         }
     }
