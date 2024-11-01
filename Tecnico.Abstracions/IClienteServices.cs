@@ -9,6 +9,6 @@ namespace Tecnico.Abstracions
         Task<bool> Eliminar(int clienteId);
         Task<ClientesDTO> Buscar(int id);
         Task<List<ClientesDTO>> Listar(Expression<Func<ClientesDTO, bool>> criterio);
-        Task<bool> ExistePrioridad(int Nombres, int tiempo, string Telefono);
+        Task<bool> ExisteCliente(string nombres, int tiempo, string telefono);
     }
 }
