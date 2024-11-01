@@ -2,7 +2,7 @@
 
 namespace Tecnico.Data.Models
 {
-    internal class Clientes
+    public class Clientes
     {
         [Key]
         public int ClienteId { get; set; }
